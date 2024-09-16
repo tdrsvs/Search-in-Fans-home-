@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بحث عن  كرتونات في ديار المعجبين</title>
+    <!-- إضافة مكتبة أيقونات Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* منع التمرير أثناء تحميل الصفحة */
+        }
+
+        /* دائرة تحميل */
+        .loader {
+            position: fixed;
+            top: 44%;
+            left: 44%;
+            transform: translate(-50%, -50%);
+            border: 8px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 8px solid #c9d1d9;
+            width: 60px;
+            height: 60px;
+            animation: spin 1.5s linear infinite;
+            z-index: 1000; /* تأكيد ظهور الدائرة فوق المحتوى */
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* المحتوى الفعلي */
+        .container {
+            display: none; /* إخفاء المحتوى حتى انتهاء تحميل الصفحة */
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        input[type="text"] {
+            width: 80%;
+            max-width: 600px;
+            padding: 12px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background-color: #161b22;
+            color: #c9d1d9;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input::placeholder {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.6;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .search-results {
+            margin-top: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            background-color: #161b22;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border: 1px solid #30363d;
+        }
+
+        .result-item:hover {
+            background-color: #21262d;
+        }
+
+        .result-item .icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        .popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .popup-content {
+            background-color: #161b22;
+            color: #c9d1d9;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+            position: relative;
+            border: 1px solid #30363d;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .popup-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .popup-content h2 {
+            margin: 15px 0;
+        }
+
+        .popup-content p {
+            margin-bottom: 20px;
+        }
+
+        .popup-content .watch-button {
+            background-color: rgba(0, 0, 0, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .popup-content .watch-button:hover {
+            background-color: #161b22;
+        }
+
+        .close-popup {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            color: #c9d1d9;
+        }
+    </style>
+</head>
+<body>
+    <!-- دائرة تحميل -->
+    <div class="loader" id="loader"></div>
+
+    <!-- المحتوى الفعلي -->
+    <div class="container">
+        <input type="text" id="searchInput" placeholder="ابحث عن كرتون">
+        <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <div class="popup" id="popup">
+        <div class="popup-content" id="popupContent">
+            <span class="close-popup" id="closePopup"><i class="fas fa-times"></i></span>
+            <img id="popupImage" src="" alt="Poster">
+            <h2 id="popupTitle"></h2>
+            <p id="popupStory"></p>
+            <p id="popupGenre"></p>
+            <button class="watch-button" id="watchButton">Watch now   <i class="fas fa-play"></i></button>
+        </div>
+    </div>
+
+    <script>
+        // تأخير عرض المحتوى لمدة 3 ثوانٍ
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loader').style.display = 'none'; // إخفاء دائرة التحميل
+                document.querySelector('.container').style.display = 'block'; // عرض المحتوى
+                document.body.style.overflow = 'auto'; // استعادة التمرير
+            }, 2000); // 3 ثوانٍ
+        });
+
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const popup = document.getElementById('popup');
+        const popupContent = document.getElementById('popupContent');
+        const popupImage = document.getElementById('popupImage');
+        const popupTitle = document.getElementById('popupTitle');
+        const popupStory = document.getElementById('popupStory');
+        const popupGenre = document.getElementById('popupGenre');
+        const watchButton = document.getElementById('watchButton');
+        const closePopup = document.getElementById('closePopup');
+
+        const movies = [
+         
+         
+            {
+                title: 'Gravity Falls',
+                story: 'يقضي الشقيقان التوأم ديبر ومابل باينز الصيف في منتجع سياحي يملكه عمهما الأكبر في منطقة جرافيتي فولز الغامضة في ولاية أوريغون.',
+                genre: '2012',
+                type: 'show',
+                image: 'https://s01.babup.com/uploads/140903-0075-scaled_c954b.jpg',
+                link: 'https://fanshome0.github.io/Gravity-Falls/'
+            },
+
+
+         
+            {
+                title: 'Orion and the Dark',
+                story: 'يواجه صبي ذو خيال نشط مخاوفه في رحلة لا تُنسى عبر الليل مع صديقه الجديد وهو مخلوق عملاق مبتسم يُدعى دارك',
+                genre: '2024',
+                type: 'movie',
+                image: 'https://s01.babup.com/uploads/35522875-web1-KPC-021724-S-OTSOrion-cmyk-1_ffb3f.jpg',
+                link: 'https://tdrsvs.github.io/Orion-and-Dark/'
+            },
+        
+        
+            {
+                title: 'بن 10 كلاسيك',
+                story: 'في مغامرة مثيرة، يكتشف فتى صغير جهازًا غير عادي يتيح له التحول إلى كائنات متنوعة ذات قدرات فريدة. بمساعدة أفراد عائلته، يتنقل عبر تحديات ومهام معقدة، مستخدمًا قدراته لمواجهة التهديدات وإنقاذ العالم من المخاطر. كل حلقة تكشف عن جانب جديد من قدراته ومهامه، مما يجعله يخوض مغامرات مليئة بالإثارة والتشويق',
+                genre: '2005',
+                type: 'show',
+                image: 'https://s01.babup.com/uploads/LAND-16-9-SERIES_a9c49.jpeg',
+                link: 'https://tdrsvs.github.io/ben-10-classic-/'
+            },
+           
+           
+            {
+                title: 'Ratatouille',
+                story: 'يتناول الفيلم حول فأر يستطيع الطبخ بشكل رائع يعقد تحالفًا غير عادي مع عامل مطبخ شاب في مطعم باريسي شهير',
+                genre: '2007',
+                type: 'movie',
+                image: 'https://s01.babup.com/uploads/in-pixars-masterpiece-ratatouille-2007-a-main-character-is-v0-ddsjsqkgd20b1_cc934.jpg',
+                link: 'https://fanshome0.github.io/Ratatouille/'
+            },
+       
+       
+       
+       
+       
+       
+        ];
+
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase();
+            searchResults.innerHTML = '';
+
+            if (query.trim() === '') {
+                return;
+            }
+
+            const filteredMovies = movies.filter(movie => movie.title.toLowerCase().includes(query));
+            filteredMovies.forEach(movie => {
+                const item = document.createElement('div');
+                item.className = 'result-item';
+                item.innerHTML = `
+                    <div class="icon">
+                        <i class="${movie.type === 'movie' ? 'fas fa-film' : 'fas fa-tv'}"></i>
+                    </div>
+                    <span>${movie.title}</span>
+                `;
+                item.addEventListener('click', () => {
+                    popup.style.display = 'flex';
+                    popupImage.src = movie.image;
+                    popupTitle.textContent = movie.title;
+                    popupStory.textContent = movie.story;
+                    popupGenre.textContent = `تم العرض الاول في  ${movie.genre}`;
+                    watchButton.onclick = () => window.open(movie.link, '_blank');
+                });
+                searchResults.appendChild(item);
+            });
+        });
+
+        closePopup.addEventListener('click', () => {
+            popup.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شريط التذييل المتحرك</title>
+    <style>
+        /* استايل عام للصفحة */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* استايل شريط التذييل */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #e6b800; /* لون خلفية الشريط */
+            color: #000; /* لون النص */
+            text-align: center;
+            padding: 10px 0;
+            overflow: hidden; /* لإخفاء النصوص التي تتجاوز العرض */
+        }
+
+        .marquee-container {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee 10s linear infinite; /* سرعة الحركة */
+        }
+
+        .marquee {
+            font-family: 'Cairo', sans-serif; /* خط عربي عريض وجميل */
+            font-weight: bold; /* نص عريض */
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translateX(-100%); /* يبدأ من خارج الشاشة من اليسار */
+            }
+            100% {
+                transform: translateX(100%); /* ينتهي عند خارج الشاشة من اليمين */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <!-- محتوى الصفحة هنا -->
+    </div>
+
+    <footer class="footer">
+        <div class="marquee-container">
+            <div class="marquee"> 
+            
+            للبحث عن الكرتون الذي تريده على ديار المعجبين أدخل اسم الكرتون بشكل صحيح لتحصل على النتائج المطلوبة فورًا
+            
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
